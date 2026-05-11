@@ -11,8 +11,6 @@ export default function ButtonPrimary({ title, onPress, style, disabled, iconNam
         return theme.colors.secondaryContainer;
       case 'tertiary':
         return theme.colors.tertiaryContainer;
-      case 'google':
-        return '#FFFFFF';
       case 'success':
         return theme.colors.success;
       default:
@@ -27,8 +25,6 @@ export default function ButtonPrimary({ title, onPress, style, disabled, iconNam
         return theme.colors.onSecondary;
       case 'tertiary':
         return theme.colors.onTertiary;
-      case 'google':
-        return '#000000';
       case 'success':
         return '#FFFFFF';
       default:
@@ -49,12 +45,7 @@ export default function ButtonPrimary({ title, onPress, style, disabled, iconNam
       ]}
     >
       {iconName && (
-        <Ionicons
-          name={iconName}
-          size={26}
-          color={variant === 'google' ? '#4285F4' : getTextColor()}
-          style={styles.icon}
-        />
+        <Ionicons name={iconName} size={26} color={getTextColor()} style={styles.icon} />
       )}
       <AppText style={[styles.text, { color: getTextColor() }]}>{title}</AppText>
     </Pressable>

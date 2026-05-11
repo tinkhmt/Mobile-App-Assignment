@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { BookOpen, CirclePlay, Languages, PencilLine, Search, ShieldCheck, Sparkles, Save } from 'lucide-react';
 import { getLanguages, getQuestions, getTopics, type BackendLanguage, type BackendQuestion, type BackendTopic } from '../api/backend';
 
-type ContentCategory = 'Language' | 'Topic' | 'Quiz';
+type ContentCategory = 'Language' | 'Topic' | 'Question';
 
 type ContentItem = {
   id: string;
@@ -23,10 +23,10 @@ const categoryMeta: Record<ContentCategory, { label: string; icon: ReactNode; de
     icon: <BookOpen size={16} />,
     description: 'Review topic names and language assignments stored in MongoDB.',
   },
-  Quiz: {
-    label: 'Quizzes',
+  Question: {
+    label: 'Questions',
     icon: <CirclePlay size={16} />,
-    description: 'Question groups are rendered as quizzes so the admin UI tracks backend content coverage.',
+    description: 'Individual questions fetched directly from the backend /api/questions endpoint.',
   },
 };
 
@@ -45,6 +45,10 @@ function ContentManagement() {
   const [questions, setQuestions] = useState<BackendQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Demo: Default to Free user. In production, get this from auth context/token
+  const userPlan = 'Free';
+  const userRole = 'ADMIN';
+  const canBypassPremiumLocks = userRole === 'ADMIN';
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +69,7 @@ function ContentManagement() {
         setLanguages(languageData);
         setTopics(topicData);
         setQuestions(questionData);
-        setSelectedId((currentId) => currentId || languageData[0]?.id || topicData[0]?.id || questionData[0]?.topicId || '');
+        setSelectedId((currentId) => currentId || languageData[0]?.id || topicData[0]?.id || questionData[0]?.id || '');
         setError('');
       } catch (requestError) {
         if (!cancelled) {
@@ -104,42 +108,37 @@ function ContentManagement() {
     return {
       id: topic.id,
       title: topic.name,
-      subtitle: `${language?.name ?? 'Unknown language'} · languageId ${topic.languageId}`,
+      subtitle: `${language?.name ?? 'Unknown language'} · ${topic.isPremium ? '👑 Premium' : 'Free'}`,
       status: 'Published',
       details: [
         ['Language', language?.name ?? topic.languageId],
         ['Language ID', topic.languageId],
         ['Topic name', topic.name],
+        ['Access Level', topic.isPremium ? 'Premium' : 'Free'],
       ],
     };
   }), [languageLookup, topics]);
 
-  const quizItems = useMemo<ContentItem[]>(() => {
-    const groupedQuestions = questions.reduce<Map<string, BackendQuestion[]>>((groups, question) => {
-      const existingQuestions = groups.get(question.topicId) ?? [];
-      groups.set(question.topicId, [...existingQuestions, question]);
-      return groups;
-    }, new Map());
-
-    return Array.from(groupedQuestions.entries()).map(([topicId, topicQuestions]) => {
-      const topic = topicLookup.get(topicId);
-      const firstQuestion = topicQuestions[0];
+  const questionItems = useMemo<ContentItem[]>(() => {
+    return questions.map((question) => {
+      const topic = topicLookup.get(question.topicId);
       return {
-        id: topicId,
-        title: topic?.name ?? `Topic ${topicId}`,
-        subtitle: `${topicQuestions.length} questions · generated from /api/questions`,
-        status: topicQuestions.length > 2 ? 'Published' : 'Draft',
+        id: question.id,
+        title: question.content.substring(0, 50) + (question.content.length > 50 ? '...' : ''),
+        subtitle: `${topic?.name ?? 'Unknown topic'} · ${question.options.length} options`,
+        status: 'Published',
         details: [
-          ['Topic', topic?.name ?? topicId],
-          ['Questions', String(topicQuestions.length)],
-          ['Sample prompt', firstQuestion?.content ?? 'No questions available'],
-          ['Options on first question', String(firstQuestion?.options?.length ?? 0)],
+          ['Question ID', question.id],
+          ['Topic', topic?.name ?? question.topicId],
+          ['Content', question.content],
+          ['Options', String(question.options.length)],
+          ['Correct option', String(question.correctOptionIndex)],
         ],
       };
     });
   }, [questions, topicLookup]);
 
-  const items = category === 'Language' ? languageItems : category === 'Topic' ? topicItems : quizItems;
+  const items = category === 'Language' ? languageItems : category === 'Topic' ? topicItems : questionItems;
 
   const filteredItems = useMemo(() => {
     const search = searchTerm.toLowerCase();
@@ -147,6 +146,8 @@ function ContentManagement() {
   }, [items, searchTerm]);
 
   const selectedItem = filteredItems.find((item) => item.id === selectedId) ?? filteredItems[0];
+  const selectedTopic = category === 'Topic' ? topics.find((t) => t.id === selectedId) : undefined;
+  const isPremiumContentAccessDenied = selectedTopic && selectedTopic.isPremium && !canBypassPremiumLocks && userPlan === 'Free';
 
   useEffect(() => {
     if (!selectedItem) {
@@ -162,7 +163,7 @@ function ContentManagement() {
       <div className="page-hero card mb-6">
         <div className="page-hero-copy">
           <span className="eyebrow">Content management</span>
-          <h1>Live languages, topics, and quizzes from the backend.</h1>
+          <h1>Live languages, topics, and questions from the backend.</h1>
           <p>The page reads directly from Mongo-backed endpoints so the admin view reflects the current catalog instead of a local fixture.</p>
         </div>
         <div className="page-hero-panel">
@@ -203,9 +204,9 @@ function ContentManagement() {
         <div className="card stat-card">
           <div className="stat-icon accent-emerald"><ShieldCheck size={24} /></div>
           <div className="stat-info">
-            <h3>Quizzes</h3>
-            <div className="value">{quizItems.length}</div>
-            <div className="muted small">Derived from question groups</div>
+            <h3>Questions</h3>
+            <div className="value">{questions.length}</div>
+            <div className="muted small">Individual items from backend</div>
           </div>
         </div>
       </div>
@@ -224,7 +225,7 @@ function ContentManagement() {
                   className={`chip ${category === itemCategory ? 'chip-active' : ''}`}
                   onClick={() => {
                     setCategory(itemCategory);
-                    const firstItemId = itemCategory === 'Language' ? languageItems[0]?.id : itemCategory === 'Topic' ? topicItems[0]?.id : quizItems[0]?.id;
+                    const firstItemId = itemCategory === 'Language' ? languageItems[0]?.id : itemCategory === 'Topic' ? topicItems[0]?.id : questionItems[0]?.id;
                     setSelectedId(firstItemId ?? '');
                   }}
                 >
@@ -255,22 +256,29 @@ function ContentManagement() {
             <div className="empty-state">Loading content from the backend...</div>
           ) : (
             <div className="item-list">
-              {filteredItems.map((item) => (
-                <button
-                  key={item.id}
-                  className={`item-row ${selectedId === item.id ? 'item-row-active' : ''}`}
-                  onClick={() => setSelectedId(item.id)}
-                >
-                  <div>
-                    <div className="item-title-row">
-                      <strong>{item.title}</strong>
-                      <span className={`badge ${item.status === 'Published' ? 'badge-success' : 'badge-warning'}`}>{item.status}</span>
+              {filteredItems.map((item) => {
+                const topicData = category === 'Topic' ? topics.find((t) => t.id === item.id) : undefined;
+                const isLocked = topicData?.isPremium && !canBypassPremiumLocks && userPlan === 'Free';
+                return (
+                  <button
+                    key={item.id}
+                    className={`item-row ${selectedId === item.id ? 'item-row-active' : ''} ${isLocked ? 'item-row-locked' : ''}`}
+                    onClick={() => !isLocked && setSelectedId(item.id)}
+                    disabled={isLocked}
+                    title={isLocked ? 'Premium content - Upgrade to access' : undefined}
+                  >
+                    <div>
+                      <div className="item-title-row">
+                        <strong>{item.title}</strong>
+                        <span className={`badge ${item.status === 'Published' ? 'badge-success' : 'badge-warning'}`}>{item.status}</span>
+                        {isLocked && <span className="badge badge-premium">🔒 Premium</span>}
+                      </div>
+                      <p>{item.subtitle}</p>
                     </div>
-                    <p>{item.subtitle}</p>
-                  </div>
-                  <PencilLine size={16} />
-                </button>
-              ))}
+                    <PencilLine size={16} />
+                  </button>
+                );
+              })}
               {filteredItems.length === 0 && <div className="empty-state">No content matched your search.</div>}
             </div>
           )}
@@ -280,14 +288,21 @@ function ContentManagement() {
           <div className="card-header-row">
             <div>
               <h2>Editor</h2>
-              <p className="muted">Edit the current backend record snapshot.</p>
+              <p className="muted">{isPremiumContentAccessDenied ? 'Premium content - Upgrade your plan' : 'Edit the current backend record snapshot.'}</p>
             </div>
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" disabled={isPremiumContentAccessDenied}>
               <Save size={16} /> Save draft
             </button>
           </div>
 
-          {selectedItem ? (
+          {isPremiumContentAccessDenied ? (
+            <div className="empty-state" style={{ padding: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+              <strong>Premium Content Locked</strong>
+              <p style={{ marginTop: '0.5rem', color: 'var(--color-muted)' }}>This topic is only available to Premium subscribers. Upgrade your plan to access this content.</p>
+              <button className="btn btn-primary" style={{ marginTop: '1rem' }}>Upgrade to Premium</button>
+            </div>
+          ) : selectedItem ? (
             <div className="editor-stack">
               <div>
                 <label>Title</label>
@@ -316,7 +331,7 @@ function ContentManagement() {
               </div>
               <div className="helper-panel">
                 <strong>Data source</strong>
-                <p>The page reads directly from the Spring Boot API, and the quiz cards are derived from the question collection because the backend does not expose a separate quiz entity.</p>
+                <p>Questions are fetched individually from the /api/questions endpoint. Each question includes content, options, and the correct answer index.</p>
               </div>
             </div>
           ) : (

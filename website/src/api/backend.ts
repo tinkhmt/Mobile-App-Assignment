@@ -17,6 +17,7 @@ export type BackendTopic = {
   id: string;
   languageId: string;
   name: string;
+  isPremium: boolean;
 };
 
 export type BackendQuestion = {

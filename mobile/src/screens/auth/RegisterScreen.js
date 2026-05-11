@@ -31,18 +31,11 @@ export default function RegisterScreen({ navigation }) {
     </Pressable>
   );
 
-  const renderHomeButton = () => (
-    <Pressable onPress={() => navigation.navigate('Home')} style={styles.navButton}>
-      <Ionicons name="home" size={28} color={theme.colors.primary} />
-    </Pressable>
-  );
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <ScreenHeader
         title="Create Account"
         left={renderBackButton()}
-        right={renderHomeButton()}
       />
 
       <View style={styles.header}>

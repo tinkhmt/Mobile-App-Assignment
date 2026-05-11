@@ -14,6 +14,10 @@ export default function GuestScreen({ navigation }) {
     try {
       const data = await loginAsGuest();
       await setSession(data);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Languages' }],
+      });
     } catch (error) {
       alert(error.message || 'Guest login failed');
     }

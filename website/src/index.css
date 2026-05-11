@@ -104,6 +104,13 @@ input:focus, select:focus, textarea:focus {
   transform: translateY(-1px);
 }
 
+.btn-primary:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
 .btn-outline {
   border: 1px solid var(--border-color);
   color: var(--text-primary);
@@ -562,6 +569,23 @@ tr:hover td {
   border-color: rgba(79, 70, 229, 0.35);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+}
+
+.item-row-locked {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.item-row-locked:hover {
+  border-color: var(--border-color);
+  box-shadow: none;
+  transform: none;
+}
+
+.badge-premium {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+  margin-left: auto;
 }
 
 .item-title-row {
