@@ -1,5 +1,6 @@
 package com.mobiledev.SEdu.subscription.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
@@ -14,6 +15,7 @@ public class Subscription {
     private double amountPaid;
     private Instant startDate;
     private Instant endDate;
+    @JsonProperty("active")
     private boolean active;
 
     public Subscription() {}

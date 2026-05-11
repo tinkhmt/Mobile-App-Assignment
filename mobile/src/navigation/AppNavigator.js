@@ -14,6 +14,8 @@ import VocabularyDetailScreen from '../screens/learning/VocabularyDetailScreen';
 import LessonScreen from '../screens/learning/LessonScreen';
 import QuizScreen from '../screens/quiz/QuizScreen';
 import QuizResultScreen from '../screens/quiz/QuizResultScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
+import SubscriptionScreen from '../screens/profile/SubscriptionScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -47,6 +49,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Lesson" component={LessonScreen} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="QuizResult" component={QuizResultScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Subscription" component={SubscriptionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
