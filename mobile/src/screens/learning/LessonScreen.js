@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, StyleSheet, Image, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Speech from 'expo-speech';
 import AppText from '../../components/AppText';
 import ButtonPrimary from '../../components/ButtonPrimary';
 import ScreenHeader from '../../components/ScreenHeader';
@@ -31,6 +32,16 @@ export default function LessonScreen({ route, navigation }) {
 
   const current = vocabularies[index];
   const progress = vocabularies.length > 0 ? ((index + 1) / vocabularies.length) * 100 : 0;
+
+  const speakWord = () => {
+    if (current?.word) {
+      Speech.speak(current.word, {
+        language: 'en-US',
+        pitch: 1.0,
+        rate: 0.75,
+      });
+    }
+  };
 
   const handleNext = () => {
     if (index + 1 >= vocabularies.length) {
@@ -109,7 +120,7 @@ export default function LessonScreen({ route, navigation }) {
       <View style={styles.audioButton}>
         <ButtonPrimary
           title="Play Audio"
-          onPress={() => {}}
+          onPress={speakWord}
           variant="secondary"
           iconName="volume-high"
         />
