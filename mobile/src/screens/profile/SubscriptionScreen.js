@@ -14,7 +14,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function SubscriptionScreen({ navigation }) {
-  const { subscription, setSubscription } = useAuthStore();
+  const { subscription, setSubscription, token } = useAuthStore();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -59,7 +59,7 @@ export default function SubscriptionScreen({ navigation }) {
 
   const handleConfirmPayment = async () => {
     try {
-      const sub = await getMySubscription();
+      const sub = await getMySubscription(token);
       setSubscription(sub);
       Alert.alert('Success', 'Subscription activated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() }
@@ -82,7 +82,7 @@ export default function SubscriptionScreen({ navigation }) {
             try {
               await cancelSubscription();
               await loadPlans();
-              const sub = await getMySubscription();
+              const sub = await getMySubscription(token);
               setSubscription(sub);
               Alert.alert('Success', 'Subscription cancelled');
             } catch (error) {

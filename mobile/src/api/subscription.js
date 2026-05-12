@@ -4,8 +4,9 @@ export function getAvailablePlans() {
   return unwrap(api.get('/api/v1/subscriptions/plans'));
 }
 
-export function getMySubscription() {
-  return unwrap(api.get('/api/v1/subscriptions/me'));
+export function getMySubscription(token) {
+  const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  return unwrap(api.get('/api/v1/subscriptions/me', config));
 }
 
 export function purchaseSubscription(plan, paymentMethod) {

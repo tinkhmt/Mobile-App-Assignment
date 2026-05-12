@@ -53,7 +53,7 @@ export default function LoginScreen({ navigation }) {
 
       <View style={styles.formContainer}>
         {/* <AppText style={styles.title}>Welcome Back!</AppText> */}
-        <AppText style={styles.subtitle}>Sign in to continue your learning journey</AppText>
+        {/* <AppText style={styles.subtitle}>Sign in to continue your learning journey</AppText> */}
 
         <View style={styles.inputContainer}>
           <Ionicons name="person" size={24} color={theme.colors.onSurfaceVariant} style={styles.inputIcon} />

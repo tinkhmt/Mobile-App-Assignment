@@ -10,7 +10,7 @@ import theme from '../../theme';
 import useAuthStore from '../../state/authStore';
 
 export default function ProfileScreen({ navigation }) {
-  const { user, subscription, setSubscription, clearSession } = useAuthStore();
+  const { user, subscription, setSubscription, clearSession, token } = useAuthStore();
 
   const handleLogout = async () => {
     try {
@@ -24,7 +24,7 @@ export default function ProfileScreen({ navigation }) {
 
   const handleManageSubscription = async () => {
     try {
-      const sub = await getMySubscription();
+      const sub = await getMySubscription(token);
       setSubscription(sub);
     } catch (error) {
       console.log('Failed to refresh subscription:', error.message);
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   },
   premiumText: {
-    color: theme.colors.primary
+    color: theme.colors.surface
   },
   freeText: {
     color: theme.colors.onSurfaceVariant

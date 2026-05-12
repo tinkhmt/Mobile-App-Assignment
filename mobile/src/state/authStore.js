@@ -19,7 +19,17 @@ const useAuthStore = create((set) => ({
       await SecureStore.setItemAsync(TOKEN_KEY, token);
     }
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(user || {}));
-    set({ user: user || null, token: token || null });
+    
+    let subscription = null;
+    if (token) {
+      try {
+        subscription = await getMySubscription(token);
+      } catch (error) {
+        console.log('Failed to fetch subscription:', error.message);
+      }
+    }
+    
+    set({ user: user || null, token: token || null, subscription });
   },
   setSubscription: (subscription) => {
     set({ subscription });
@@ -37,7 +47,7 @@ const useAuthStore = create((set) => ({
     let subscription = null;
     if (token) {
       try {
-        subscription = await getMySubscription();
+        subscription = await getMySubscription(token);
       } catch (error) {
         console.log('Failed to fetch subscription:', error.message);
       }
